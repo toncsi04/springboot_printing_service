@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>hu.unideb.inf</groupId>
-    <artifactId>Marketplace</artifactId>
+    <artifactId>PrintingService</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Marketplace</name>
-    <description>Marketplace</description>
+    <name>PrintingService</name>
+    <description>PrintingService</description>
     <url/>
     <licenses>
         <license/>

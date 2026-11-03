@@ -1,4 +1,4 @@
-package hu.unideb.inf.marketplace;
+package hu.unideb.inf.printingservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
