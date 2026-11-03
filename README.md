@@ -1,3 +1,4 @@
+```mermaid
 gantt
 title 3D Printing Service - Projekt ütemterv
 dateFormat  YYYY-MM-DD
