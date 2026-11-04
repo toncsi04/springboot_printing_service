@@ -30,7 +30,7 @@ public class UserEntity {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "USER_JOG",
-            joinColumns = @JoinColumn(name = "felh_id"),
+            joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "jog_id"))
     private Set<JogEntity> jogosultsagok;
 }
