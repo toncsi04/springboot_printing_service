@@ -1,0 +1,4 @@
+name: Local Variables
+values:
+  - key: base_url
+    value: ''

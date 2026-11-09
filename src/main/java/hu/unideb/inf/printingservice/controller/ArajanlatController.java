@@ -12,15 +12,17 @@ public class ArajanlatController {
 
     private final ArajanlatService arajanlatService;
 
-    // A @PostMapping jelzi, hogy ide új adatokat (árajánlat kérést) küldünk be
+    // Itt csináltam egy függvényt ami bekéri a dto adatait
     @PostMapping("/calculate")
     public int calculateArajanlat(@RequestBody ArajanlatKeresDto request) {
 
         // Service impl-ben lévő függvény hívása a dto adatokra
-        return arajanlatService.ArajanlatKalkulacioEsMentes(
+        int eredmeny = arajanlatService.ArajanlatKalkulacioEsMentes(
                 request.getUserId(),
                 request.getMaterialId(),
                 request.getSulygrammban()
         );
+        System.out.println(eredmeny);
+        return eredmeny;
     }
 }

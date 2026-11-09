@@ -10,7 +10,7 @@ import javax.print.DocFlavor;
 import java.util.Set;
 
 @Entity
-@Table(name = "USER")
+@Table(name = "USERS")
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,7 +29,7 @@ public class UserEntity {
     private String email;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "USER_JOG",
+    @JoinTable(name = "USERS_JOG",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "jog_id"))
     private Set<JogEntity> jogosultsagok;
