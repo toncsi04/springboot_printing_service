@@ -11,7 +11,7 @@ body:
   type: json
   content: "{\r
 
-    \    \"nev\" : \"ABS\",\r
+    \    \"nev\" : \"abs\",\r
 
     \    \"grammAr\": 3\r
 
