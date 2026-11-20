@@ -1,14 +1,17 @@
 package hu.unideb.inf.printingservice.service.impl;
 
 import hu.unideb.inf.printingservice.data.entity.UserEntity;
+import hu.unideb.inf.printingservice.data.repository.JogRepository;
 import hu.unideb.inf.printingservice.data.repository.UserRepository;
 import hu.unideb.inf.printingservice.service.UserService;
 import hu.unideb.inf.printingservice.service.dto.UserDisplayDto;
 import hu.unideb.inf.printingservice.service.dto.UserSaveDto;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -16,17 +19,24 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JogRepository jogRepository;
 
     @Override
     public UserDisplayDto save(UserSaveDto dto) {
         UserEntity entity = new UserEntity();
 
         entity.setFelhasznalonev(dto.getFelhasznalonev());
-        entity.setJelszo(dto.getJelszo());
+        entity.setJelszo(passwordEncoder.encode(dto.getJelszo()));
         entity.setEmail(dto.getEmail());
 
-        entity = userRepository.save(entity);
-        return mapToDisplayDto(entity);
+        jogRepository.findByNev("USER").ifPresent(userJog ->
+                entity.setJogosultsagok(Set.of(userJog))
+        );
+
+        // Külön változóba mentjük (vagy rögtön visszaadjuk), így az 'entity' effectively final marad!
+        UserEntity savedEntity = userRepository.save(entity);
+        return mapToDisplayDto(savedEntity);
     }
 
     @Override
