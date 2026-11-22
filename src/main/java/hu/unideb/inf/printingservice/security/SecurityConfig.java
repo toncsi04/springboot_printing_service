@@ -36,7 +36,9 @@ public class SecurityConfig {
                         // 3. Minden más végponthoz (pl. árajánlat, anyagok) bejelentkezés kell
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults()); // Egyszerű Basic Auth hitelesítés Postmanhez és JS-hez
+                .httpBasic(basic -> basic.authenticationEntryPoint((request, response, authException) -> {
+                    response.sendError(401, "Hibás felhasználónév vagy jelszó");
+                })); // Egyszerű Basic Auth hitelesítés Postmanhez és JS-hez
 
         return http.build();
     }
