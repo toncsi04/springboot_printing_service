@@ -7,9 +7,6 @@ import lombok.Data;
 public class ArajanlatKeresDto {
 
     @NotNull
-    private Long userId;
-
-    @NotNull
     private Long materialId;
 
     @NotNull

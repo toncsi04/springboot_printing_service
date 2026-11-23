@@ -138,12 +138,12 @@ async function loadUsersAndMaterials() {
     ]);
 
     // Felhasználó legördülő lista feltöltése
-    const userSelect = document.getElementById('quote-user-select');
-    userSelect.innerHTML = users.map(u =>
-        `<option value="${u.id}" ${u.felhasznalonev === currentUsername ? 'selected' : ''}>
-            #${u.id} – ${u.felhasznalonev} (${u.email})
-        </option>`
-    ).join('');
+    //const userSelect = document.getElementById('quote-user-select');
+    //userSelect.innerHTML = users.map(u =>
+    //    `<option value="${u.id}" ${u.felhasznalonev === currentUsername ? 'selected' : ''}>
+    //        #${u.id} – ${u.felhasznalonev} (${u.email})
+    //    </option>`
+    //).join('');
 
     renderMaterials(materials);
 }

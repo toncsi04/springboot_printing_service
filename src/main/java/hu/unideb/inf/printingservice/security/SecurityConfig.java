@@ -25,16 +25,15 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // REST API-hoz és teszteléshez kikapcsoljuk
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Nyilvános végpontok (regisztráció és frontend fájlok bárkinek elérhetők)
+                        // Átlag felhasználóknak csak ennyit engedek meg
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers("/", "/index.html", "/css/**", "/js/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/materials").permitAll()
+                        .requestMatchers("/api/quotes/calculate").authenticated()
 
-                        // 2. Csak ADMIN joggal elérhető végpontok (RBAC)
-                        .requestMatchers("/api/jogok/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
 
-                        // 3. Minden más végponthoz (pl. árajánlat, anyagok) bejelentkezés kell
-                        .anyRequest().authenticated()
+                        // Adminnak mindent hogy ne kelljen átírosgatni új funkciónál mindig
+                        .anyRequest().hasRole("ADMIN")
                 )
                 .httpBasic(basic -> basic.authenticationEntryPoint((request, response, authException) -> {
                     response.sendError(401, "Hibás felhasználónév vagy jelszó");
