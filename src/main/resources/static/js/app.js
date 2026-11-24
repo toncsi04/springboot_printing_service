@@ -1,8 +1,6 @@
-// Alkalmazás állapota (memóriában tárolt HTTP Basic hitelesítő fejléc)
-let authHeader = null;
-let currentUsername = null;
-
-// Segédfüggvény az értesítések megjelenítéséhez
+let authHeader = sessionStorage.getItem('authHeader');
+let currentUsername = sessionStorage.getItem('currentUsername');
+let isAdmin = false;
 function showNotification(message, type = 'success') {
     const bar = document.getElementById('notification-bar');
     bar.textContent = message;
@@ -12,7 +10,6 @@ function showNotification(message, type = 'success') {
     }, 5000);
 }
 
-// Egységes API hívó függvény (kezeli a Basic Auth-ot és a Spring ProblemDetail hibákat)
 async function apiFetch(url, options = {}) {
     const headers = {
         'Content-Type': 'application/json',
@@ -25,7 +22,6 @@ async function apiFetch(url, options = {}) {
 
     const response = await fetch(url, { ...options, headers });
 
-    // Ha hiba történt (pl. 401, 403, 404, 400), kiolvassuk a ProblemDetail JSON-t
     if (!response.ok) {
         if (response.status === 401) {
             throw new Error('Hibás felhasználónév vagy jelszó, illetve nincs bejelentkezve!');
@@ -42,7 +38,6 @@ async function apiFetch(url, options = {}) {
         }
     }
 
-    // 204 No Content (pl. DELETE) esetén nincs JSON törzs
     if (response.status === 204) {
         return null;
     }
@@ -50,7 +45,7 @@ async function apiFetch(url, options = {}) {
     return response.json();
 }
 
-// Fülek (Bejelentkezés / Regisztráció) váltása
+// Fülek váltása
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -60,7 +55,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
-// 1. REGISZTRÁCIÓ (POST /api/users - nyilvános végpont)
+// 1. REGISZTRÁCIÓ
 document.getElementById('register-panel').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -75,6 +70,8 @@ document.getElementById('register-panel').addEventListener('submit', async (e) =
             body: JSON.stringify(payload)
         });
         showNotification(`Sikeres regisztráció (${created.felhasznalonev})! Most már bejelentkezhetsz.`, 'success');
+        sessionStorage.setItem('authHeader', authHeader);
+        sessionStorage.setItem('currentUsername', currentUsername);
         e.target.reset();
         document.querySelector('[data-tab="login-panel"]').click();
     } catch (err) {
@@ -82,23 +79,25 @@ document.getElementById('register-panel').addEventListener('submit', async (e) =
     }
 });
 
-// 2. BEJELENTKEZÉS ÉS ADATOK BETÖLTÉSE
+// 2. BEJELENTKEZÉS
 document.getElementById('login-panel').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
 
-    // Basic Auth Base64 kódolása
     authHeader = 'Basic ' + btoa(`${username}:${password}`);
     currentUsername = username;
 
     try {
-        await loadUsersAndMaterials();
+        await loadAllData();
         updateAuthUI(true);
-        showNotification(`Üdvözlünk, ${username}! Adatok sikeresen betöltve.`, 'success');
+        showNotification(`Üdvözlünk, ${username}! (${isAdmin ? 'ADMIN' : 'USER'} jogosultság)`, 'success');
+        sessionStorage.setItem('authHeader', authHeader);
+        sessionStorage.setItem('currentUsername', currentUsername);
     } catch (err) {
         authHeader = null;
         currentUsername = null;
+        setAdminPanelsVisibility(false);
         updateAuthUI(false);
         showNotification(err.message, 'error');
     }
@@ -108,19 +107,22 @@ document.getElementById('login-panel').addEventListener('submit', async (e) => {
 document.getElementById('logout-btn').addEventListener('click', () => {
     authHeader = null;
     currentUsername = null;
+    setAdminPanelsVisibility(false);
     updateAuthUI(false);
     document.getElementById('materials-tbody').innerHTML =
         '<tr><td colspan="4" class="empty-row">Jelentkezz be az anyagok megtekintéséhez!</td></tr>';
-    document.getElementById('quote-user-select').innerHTML = '<option value="">-- Jelentkezz be --</option>';
     document.getElementById('quote-material-select').innerHTML = '<option value="">-- Válassz anyagot --</option>';
+    document.getElementById('quote-result-box').classList.add('hidden');
     showNotification('Sikeresen kijelentkeztél.', 'success');
+    sessionStorage.removeItem('authHeader');
+    sessionStorage.removeItem('currentUsername');
 });
 
 function updateAuthUI(isLoggedIn) {
     const badge = document.getElementById('auth-status');
     const logoutBtn = document.getElementById('logout-btn');
     if (isLoggedIn) {
-        badge.textContent = `Bejelentkezve: ${currentUsername}`;
+        badge.textContent = `Bejelentkezve: ${currentUsername} ${isAdmin ? '(ADMIN)' : ''}`;
         badge.className = 'auth-badge connected';
         logoutBtn.classList.remove('hidden');
     } else {
@@ -130,22 +132,46 @@ function updateAuthUI(isLoggedIn) {
     }
 }
 
-// Felhasználók és Anyagok betöltése a legördülő listákba és a táblázatba
-async function loadUsersAndMaterials() {
-    const [users, materials] = await Promise.all([
-        apiFetch('/api/users'),
-        apiFetch('/api/materials')
-    ]);
+// Kifejezetten a 4. és 5. szekciót jeleníti meg vagy rejti el
+function setAdminPanelsVisibility(show) {
+    isAdmin = show;
+    const usersSec = document.getElementById('admin-users-section');
+    const quotesSec = document.getElementById('admin-quotes-section');
+    if (show) {
+        usersSec.classList.remove('hidden');
+        quotesSec.classList.remove('hidden');
+    } else {
+        usersSec.classList.add('hidden');
+        quotesSec.classList.add('hidden');
+    }
+}
 
-    // Felhasználó legördülő lista feltöltése
-    //const userSelect = document.getElementById('quote-user-select');
-    //userSelect.innerHTML = users.map(u =>
-    //    `<option value="${u.id}" ${u.felhasznalonev === currentUsername ? 'selected' : ''}>
-    //        #${u.id} – ${u.felhasznalonev} (${u.email})
-    //    </option>`
-    //).join('');
-
+async function loadAllData() {
+    // Anyagok betöltése (minden bejelentkezett felhasználónak elérhető)
+    const materials = await apiFetch('/api/materials');
     renderMaterials(materials);
+
+    // Megpróbáljuk betölteni az admin végpontokat (/api/users és /api/quotes)
+    await loadAdminData();
+}
+
+async function loadAdminData() {
+    try {
+        const users = await apiFetch('/api/users');
+        setAdminPanelsVisibility(true);
+        renderUsers(users);
+
+        try {
+            const quotes = await apiFetch('/api/quotes');
+            renderQuotes(quotes);
+        } catch (quoteErr) {
+            document.getElementById('quotes-tbody').innerHTML =
+                `<tr><td colspan="6" class="empty-row">Nem sikerült betölteni az árajánlatokat (${quoteErr.message})</td></tr>`;
+        }
+    } catch (e) {
+        // Sima USER esetén a /api/users 403-at dob -> az admin panelek rejtve maradnak
+        setAdminPanelsVisibility(false);
+    }
 }
 
 function renderMaterials(materials) {
@@ -174,7 +200,55 @@ function renderMaterials(materials) {
     `).join('');
 }
 
-// 3. ÚJ NYOMTATÓANYAG FELVÉTELE (POST /api/materials)
+function renderUsers(users) {
+    const tbody = document.getElementById('users-tbody');
+    if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nincs regisztrált felhasználó.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td>#${u.id}</td>
+            <td><strong>${u.felhasznalonev}</strong></td>
+            <td>${u.email}</td>
+            <td>
+                ${u.felhasznalonev !== currentUsername
+        ? `<button type="button" class="btn btn-danger" onclick="deleteUser(${u.id})">Törlés</button>`
+        : '<span class="tag">Saját fiók</span>'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderQuotes(quotes) {
+    const tbody = document.getElementById('quotes-tbody');
+    if (!quotes || quotes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Még nincs rögzített árajánlat.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = quotes.map(q => {
+        const megrendelo = q.user?.felhasznalonev || q.felhasznalonev || (q.userId ? `User #${q.userId}` : 'Ismeretlen');
+        const anyag = q.material?.nev || q.materialNev || (q.materialId ? `Material #${q.materialId}` : '-');
+        const osszeg = q.vegosszeg ?? q.ar ?? 0;
+
+        return `
+            <tr>
+                <td>#${q.id}</td>
+                <td><strong>${megrendelo}</strong></td>
+                <td>${anyag}</td>
+                <td>${q.suly} g</td>
+                <td><strong>${Number(osszeg).toLocaleString('hu-HU')} Ft</strong></td>
+                <td>
+                    <button type="button" class="btn btn-danger" onclick="deleteQuote(${q.id})">Törlés</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// 3. ÚJ NYOMTATÓANYAG FELVÉTELE
 document.getElementById('material-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -196,13 +270,32 @@ document.getElementById('material-form').addEventListener('submit', async (e) =>
     }
 });
 
-// Anyag törlése (DELETE /api/materials/{id})
 window.deleteMaterial = async function(id) {
     try {
         await apiFetch(`/api/materials/${id}`, { method: 'DELETE' });
         showNotification(`A #${id} azonosítójú anyag törölve lett.`, 'success');
         const materials = await apiFetch('/api/materials');
         renderMaterials(materials);
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+};
+
+window.deleteUser = async function(id) {
+    try {
+        await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
+        showNotification(`A #${id} azonosítójú felhasználó törölve lett.`, 'success');
+        await loadAdminData();
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+};
+
+window.deleteQuote = async function(id) {
+    try {
+        await apiFetch(`/api/quotes/${id}`, { method: 'DELETE' });
+        showNotification(`A #${id} azonosítójú árajánlat törölve lett.`, 'success');
+        await loadAdminData();
     } catch (err) {
         showNotification(err.message, 'error');
     }
@@ -218,11 +311,15 @@ document.getElementById('refresh-materials-btn').addEventListener('click', async
     }
 });
 
-// 4. ÁRAJÁNLAT KALKULÁCIÓ ÉS MENTÉS (POST /api/quotes/calculate)
+document.getElementById('refresh-admin-btn').addEventListener('click', async () => {
+    await loadAdminData();
+    showNotification('Admin adatok frissítve.', 'success');
+});
+
+// 4. ÁRAJÁNLAT KALKULÁCIÓ
 document.getElementById('quote-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
-        userId: parseInt(document.getElementById('quote-user-select').value, 10),
         materialId: parseInt(document.getElementById('quote-material-select').value, 10),
         sulyGrammban: parseInt(document.getElementById('quote-weight').value, 10)
     };
@@ -236,7 +333,27 @@ document.getElementById('quote-form').addEventListener('submit', async (e) => {
         document.getElementById('quote-price-value').textContent = `${price.toLocaleString('hu-HU')} Ft`;
         resultBox.classList.remove('hidden');
         showNotification('Árajánlat sikeresen kiszámítva és elmentve!', 'success');
+
+        if (isAdmin) {
+            await loadAdminData();
+        }
     } catch (err) {
         showNotification(err.message, 'error');
+    }
+});
+
+// Oldalbetöltéskor / F5 frissítéskor automatikus visszaléptetés
+window.addEventListener('DOMContentLoaded', async () => {
+    if (authHeader && currentUsername) {
+        try {
+            await loadAllData();
+            updateAuthUI(true);
+        } catch (e) {
+            sessionStorage.removeItem('authHeader');
+            sessionStorage.removeItem('currentUsername');
+            authHeader = null;
+            currentUsername = null;
+            updateAuthUI(false);
+        }
     }
 });

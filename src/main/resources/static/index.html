@@ -147,11 +147,66 @@
       </div>
     </div>
   </section>
+
+  <!-- 4. SZEKCIÓ (ADMIN): Felhasználók kezelése -->
+  <section id="admin-users-section" class="card full-width hidden">
+    <div class="card-header">
+      <h2>4. Felhasználók kezelése (ADMIN)</h2>
+      <div class="btn-row">
+        <button type="button" id="refresh-admin-btn" class="btn btn-outline btn-sm">Admin adatok frissítése</button>
+        <span class="tag tag-accent">RBAC védett</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Felhasználónév</th>
+          <th>E-mail cím</th>
+          <th>Művelet</th>
+        </tr>
+        </thead>
+        <tbody id="users-tbody">
+        <tr>
+          <td colspan="4" class="empty-row">Nincs megjeleníthető felhasználó.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 5. SZEKCIÓ (ADMIN): Beérkezett árajánlatok / rendelések -->
+  <section id="admin-quotes-section" class="card full-width hidden">
+    <div class="card-header">
+      <h2>5. Beérkezett árajánlatok és megrendelések (ADMIN)</h2>
+      <span class="tag tag-accent">RBAC védett</span>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Megrendelő</th>
+          <th>Nyomtatóanyag</th>
+          <th>Súly</th>
+          <th>Végösszeg</th>
+          <th>Művelet</th>
+        </tr>
+        </thead>
+        <tbody id="quotes-tbody">
+        <tr>
+          <td colspan="6" class="empty-row">Még nincs rögzített árajánlat.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </main>
 
 <footer class="footer">
   <div class="container">
-    <p>Debreceni Egyetem • Fullstack Webfejlesztés Projekt • Spring Boot & PostgreSQL</p>
+    <p>Spring Boot & PostgreSQL</p>
   </div>
 </footer>
 
