@@ -15,7 +15,7 @@ import java.time.Instant;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    // 1. Amikor a Service rétegben nem található egy erőforrás (pl. "Felhasználó nem található!")
+    // Amikor a Service rétegben nem található egy erőforrás (pl. "Felhasználó nem található!")
     @ExceptionHandler(RuntimeException.class)
     public ProblemDetail handleNotFoundOrBusinessError(RuntimeException ex, HttpServletRequest request) {
         log.warn("Üzleti vagy keresési hiba ({}): {}", request.getRequestURI(), ex.getMessage());
@@ -27,7 +27,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
-    // 2. Végső védőháló minden váratlan belső hibára (500) – nem szivárogtat ki stack trace-t!
+    // Minden egyéb hibára, az összes osztályt megfogja
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpectedException(Exception ex, HttpServletRequest request) {
         log.error("Váratlan szerverhiba a következő útvonalon: {}", request.getRequestURI(), ex);

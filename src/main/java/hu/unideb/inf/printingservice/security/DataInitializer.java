@@ -21,7 +21,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // 1. Alapértelmezett jogok létrehozása, ha még nincsenek az adatbázisban
+        // Alapértelmezett jogok létrehozása, ha még nincsenek az adatbázisban
         JogEntity adminJog = jogRepository.findByNev("ADMIN").orElseGet(() -> {
             JogEntity jog = new JogEntity();
             jog.setNev("ADMIN");
@@ -36,7 +36,7 @@ public class DataInitializer implements CommandLineRunner {
             return jogRepository.save(jog);
         });
 
-        // 2. Teszt admin felhasználó létrehozása (felhasznalonev: admin, jelszo: admin123)
+        // Teszt admin felhasználó létrehozása (felhasznalonev: admin, jelszo: admin123)
         if (userRepository.findByFelhasznalonev("admin").isEmpty()) {
             UserEntity adminUser = new UserEntity();
             adminUser.setFelhasznalonev("admin");

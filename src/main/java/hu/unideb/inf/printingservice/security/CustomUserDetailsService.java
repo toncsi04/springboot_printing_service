@@ -23,7 +23,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         UserEntity user = userRepository.findByFelhasznalonev(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Felhasználó nem található: " + username));
 
-        // A JogEntity neveit (pl. "ADMIN", "USER") átalakítjuk "ROLE_ADMIN", "ROLE_USER" jogosultságokká
         var authorities = user.getJogosultsagok().stream()
                 .map(jog -> new SimpleGrantedAuthority("ROLE_" + jog.getNev().toUpperCase()))
                 .collect(Collectors.toSet());

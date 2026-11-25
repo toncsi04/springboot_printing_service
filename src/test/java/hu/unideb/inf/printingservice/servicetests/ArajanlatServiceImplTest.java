@@ -20,11 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-// Bekapcsolja a Mockito-t a JUnit 5 teszthez (Spring konténer nélkül!)
+// Bekapcsolja a Mockito-t a JUnit 5 teszthez
 @ExtendWith(MockitoExtension.class)
 class ArajanlatServiceImplTest {
 
-    // 1. Hamis ("bábu") tárolók létrehozása
     @Mock
     private ArajanlatRepository arajanlatRepository;
 
@@ -34,12 +33,11 @@ class ArajanlatServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
-    // 2. A valódi tesztelendő osztály, amibe a Mockito befecskendezi a 3 fenti bábut
     @InjectMocks
     private ArajanlatServiceImpl arajanlatService;
 
     @Test
-    void arajanlatKalkulacioEsMentes_sikeresSzamitas() {
+    void ArajanlatKalkulacioEsMentes_sikeresSzamitas() {
         // --- ARRANGE (Előkészítés: tesztadatok és a bábuk betanítása) ---
         UserEntity tesztUser = new UserEntity();
         tesztUser.setId(1L);
@@ -64,7 +62,7 @@ class ArajanlatServiceImplTest {
     }
 
     @Test
-    void arajanlatKalkulacioEsMentes_nemLetezoUserEsetenHibatDob() {
+    void ArajanlatKalkulacioEsMentes_nemLetezoUserEsetenHibatDob() {
         // --- ARRANGE: A bábu üres Optional-t ad vissza (mintha nem lenne ilyen user) ---
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 

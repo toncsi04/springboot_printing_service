@@ -23,7 +23,6 @@ public class ArajanlatController {
     private final UserRepository userRepository;
     private final ArajanlatRepository arajanlatRepository;
 
-    // Itt csináltam egy függvényt ami bekéri a dto adatait
     @PostMapping("/calculate")
     public int calculateArajanlat(@Valid @RequestBody ArajanlatKeresDto request, Authentication authentication) {
         UserEntity currentUser = userRepository.findByFelhasznalonev(authentication.getName())
@@ -40,7 +39,6 @@ public class ArajanlatController {
         return arajanlatRepository.findAll();
     }
 
-    // Árajánlat törlése ID alapján (ADMIN)
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteQuote(@PathVariable Long id) {

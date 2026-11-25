@@ -17,7 +17,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Jelszavak biztonságos hashelése
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -26,11 +26,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // REST API-hoz és teszteléshez kikapcsoljuk
                 .authorizeHttpRequests(auth -> auth
                         // Átlag felhasználóknak csak ennyit engedek meg
-                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers("/", "/index.html", "/css/**", "/js/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/materials").permitAll()
                         .requestMatchers("/api/quotes/calculate").authenticated()
-
 
                         // Adminnak mindent hogy ne kelljen átírosgatni új funkciónál mindig
                         .anyRequest().hasRole("ADMIN")

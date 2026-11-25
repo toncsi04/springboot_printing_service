@@ -6,16 +6,19 @@ import hu.unideb.inf.printingservice.service.MaterialService;
 import hu.unideb.inf.printingservice.service.dto.MaterialSaveDto;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Transactional(readOnly = true)
 @Service
 @AllArgsConstructor
 public class MaterialServiceImpl implements MaterialService {
 
     private final MaterialRepository materialRepository;
 
+    @Transactional
     @Override
     public MaterialSaveDto save(MaterialSaveDto dto) {
         MaterialEntity entity = new MaterialEntity();
@@ -46,6 +49,7 @@ public class MaterialServiceImpl implements MaterialService {
         }).collect(Collectors.toList());
     }
 
+    @Transactional
     @Override
     public void delete(Long id) {
         materialRepository.deleteById(id);

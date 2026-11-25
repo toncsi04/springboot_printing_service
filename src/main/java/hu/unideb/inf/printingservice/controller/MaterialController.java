@@ -16,19 +16,16 @@ public class MaterialController {
 
     private final MaterialService materialService;
 
-    // Új anyag felvétele vagy meglévő módosítása (CREATE / UPDATE)
     @PostMapping
     public MaterialSaveDto saveMaterial(@Valid @RequestBody MaterialSaveDto dto) {
         return materialService.save(dto);
     }
 
-    // Összes anyag lekérdezése (READ)
     @GetMapping
     public List<MaterialSaveDto> getAllMaterials() {
         return materialService.findAll();
     }
 
-    // Anyag törlése ID alapján (DELETE)
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteMaterial(@PathVariable Long id) {

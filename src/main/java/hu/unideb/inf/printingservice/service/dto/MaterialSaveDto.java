@@ -3,6 +3,7 @@ package hu.unideb.inf.printingservice.service.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 @Data
@@ -14,6 +15,6 @@ public class MaterialSaveDto {
     private String nev;
 
     @NotNull
-    @Min(value = 1)
+    @Positive
     private Double grammAr;
 }

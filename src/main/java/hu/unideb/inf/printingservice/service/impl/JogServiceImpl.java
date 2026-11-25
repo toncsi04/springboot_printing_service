@@ -6,6 +6,7 @@ import hu.unideb.inf.printingservice.service.JogService;
 import hu.unideb.inf.printingservice.service.dto.JogDto;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +17,7 @@ public class JogServiceImpl implements JogService {
 
     private final JogRepository jogRepository;
 
+    @Transactional
     @Override
     public JogDto save(JogDto dto) {
         JogEntity jogEntity = new JogEntity();
@@ -27,6 +29,7 @@ public class JogServiceImpl implements JogService {
         return dto;
     }
 
+    @Transactional
     @Override
     public List<JogDto> findAll() {
         return jogRepository.findAll().stream().map(entity -> {
@@ -38,6 +41,7 @@ public class JogServiceImpl implements JogService {
         }).collect(Collectors.toList());
     }
 
+    @Transactional
     @Override
     public void delete(Long id) {
         jogRepository.deleteById(id);
