@@ -54,4 +54,19 @@ public class MaterialServiceImpl implements MaterialService {
     public void delete(Long id) {
         materialRepository.deleteById(id);
     }
+
+    @Override
+    @Transactional
+    public MaterialSaveDto updatePrice(Long id, Double ujGrammAr) {
+        MaterialEntity material = materialRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Nyomtatóanyag nem található: " + id));
+        material.setGrammAr(ujGrammAr);
+        MaterialEntity saved = materialRepository.save(material);
+
+        MaterialSaveDto dto = new MaterialSaveDto();
+        dto.setId(saved.getId());
+        dto.setNev(saved.getNev());
+        dto.setGrammAr(saved.getGrammAr());
+        return dto;
+    }
 }

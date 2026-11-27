@@ -1,6 +1,8 @@
 let authHeader = sessionStorage.getItem('authHeader');
 let currentUsername = sessionStorage.getItem('currentUsername');
 let isAdmin = false;
+let cachedMaterials = []; // Eltároljuk az anyagokat, hogy a "Saját árajánlataim" lenyíló listájában is használhassuk
+
 function showNotification(message, type = 'success') {
     const bar = document.getElementById('notification-bar');
     bar.textContent = message;
@@ -70,8 +72,6 @@ document.getElementById('register-panel').addEventListener('submit', async (e) =
             body: JSON.stringify(payload)
         });
         showNotification(`Sikeres regisztráció (${created.felhasznalonev})! Most már bejelentkezhetsz.`, 'success');
-        sessionStorage.setItem('authHeader', authHeader);
-        sessionStorage.setItem('currentUsername', currentUsername);
         e.target.reset();
         document.querySelector('[data-tab="login-panel"]').click();
     } catch (err) {
@@ -107,6 +107,7 @@ document.getElementById('login-panel').addEventListener('submit', async (e) => {
 document.getElementById('logout-btn').addEventListener('click', () => {
     authHeader = null;
     currentUsername = null;
+    cachedMaterials = [];
     setAdminPanelsVisibility(false);
     updateAuthUI(false);
     document.getElementById('materials-tbody').innerHTML =
@@ -121,14 +122,18 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 function updateAuthUI(isLoggedIn) {
     const badge = document.getElementById('auth-status');
     const logoutBtn = document.getElementById('logout-btn');
+    const myQuotesSec = document.getElementById('my-quotes-section');
+
     if (isLoggedIn) {
         badge.textContent = `Bejelentkezve: ${currentUsername} ${isAdmin ? '(ADMIN)' : ''}`;
         badge.className = 'auth-badge connected';
         logoutBtn.classList.remove('hidden');
+        myQuotesSec.classList.remove('hidden');
     } else {
         badge.textContent = 'Nincs bejelentkezve';
         badge.className = 'auth-badge disconnected';
         logoutBtn.classList.add('hidden');
+        myQuotesSec.classList.add('hidden');
     }
 }
 
@@ -147,12 +152,25 @@ function setAdminPanelsVisibility(show) {
 }
 
 async function loadAllData() {
-    // Anyagok betöltése (minden bejelentkezett felhasználónak elérhető)
-    const materials = await apiFetch('/api/materials');
-    renderMaterials(materials);
-
-    // Megpróbáljuk betölteni az admin végpontokat (/api/users és /api/quotes)
+    // 1. Először ellenőrizzük, hogy ADMIN-e (hogy a renderMaterials már tudja, mutasson-e ármódosító mezőt)
     await loadAdminData();
+
+    // 2. Anyagok betöltése (minden bejelentkezett felhasználónak elérhető)
+    cachedMaterials = await apiFetch('/api/materials');
+    renderMaterials(cachedMaterials);
+
+    // 3. Saját árajánlatok betöltése (minden bejelentkezett felhasználónak elérhető)
+    await loadMyQuotes();
+}
+
+async function loadMyQuotes() {
+    try {
+        const myQuotes = await apiFetch('/api/quotes/my');
+        renderMyQuotes(myQuotes);
+    } catch (err) {
+        document.getElementById('my-quotes-tbody').innerHTML =
+            `<tr><td colspan="5" class="empty-row">Nem sikerült betölteni a saját ajánlataidat (${err.message})</td></tr>`;
+    }
 }
 
 async function loadAdminData() {
@@ -192,12 +210,58 @@ function renderMaterials(materials) {
         <tr>
             <td>#${m.id}</td>
             <td><strong>${m.nev}</strong></td>
-            <td>${m.grammAr} Ft / g</td>
             <td>
-                <button type="button" class="btn btn-danger" onclick="deleteMaterial(${m.id})">Törlés</button>
+                ${isAdmin
+        ? `<input type="number" id="mat-price-input-${m.id}" value="${m.grammAr}" min="0.1" step="0.5" style="width: 90px; padding: 4px;"> Ft / g`
+        : `${m.grammAr} Ft / g`
+    }
+            </td>
+            <td>
+                ${isAdmin
+        ? `<button type="button" class="btn btn-primary btn-sm" onclick="updateMaterialPrice(${m.id})">Ár mentése</button>
+                       <button type="button" class="btn btn-danger btn-sm" onclick="deleteMaterial(${m.id})">Törlés</button>`
+        : '<span class="tag">Csak megtekintés</span>'
+    }
             </td>
         </tr>
     `).join('');
+}
+
+function renderMyQuotes(quotes) {
+    const tbody = document.getElementById('my-quotes-tbody');
+    if (!quotes || quotes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">Még nincs saját árajánlatod. Készíts egyet a fenti kalkulátorral!</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = quotes.map(q => {
+        const currentMatId = q.material?.id || q.materialId;
+        const osszeg = q.vegosszeg ?? q.ar ?? 0;
+
+        // Lenyíló lista az elérhető anyagokból, az aktuális kiválasztva
+        const materialOptions = cachedMaterials.map(m =>
+            `<option value="${m.id}" ${m.id === currentMatId ? 'selected' : ''}>${m.nev} (${m.grammAr} Ft/g)</option>`
+        ).join('');
+
+        return `
+            <tr>
+                <td>#${q.id}</td>
+                <td>
+                    <select id="my-quote-mat-${q.id}" style="padding: 4px;">
+                        ${materialOptions}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" id="my-quote-weight-${q.id}" value="${q.suly}" min="1" max="10000" style="width: 90px; padding: 4px;"> g
+                </td>
+                <td><strong>${Number(osszeg).toLocaleString('hu-HU')} Ft</strong></td>
+                <td>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="updateMyQuote(${q.id})">Módosítás</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteMyQuote(${q.id})">Törlés</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function renderUsers(users) {
@@ -248,7 +312,7 @@ function renderQuotes(quotes) {
     }).join('');
 }
 
-// 3. ÚJ NYOMTATÓANYAG FELVÉTELE
+// 3. ÚJ NYOMTATÓANYAG FELVÉTELE (ADMIN)
 document.getElementById('material-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -263,19 +327,74 @@ document.getElementById('material-form').addEventListener('submit', async (e) =>
         });
         showNotification(`"${payload.nev}" sikeresen elmentve!`, 'success');
         e.target.reset();
-        const materials = await apiFetch('/api/materials');
-        renderMaterials(materials);
+        cachedMaterials = await apiFetch('/api/materials');
+        renderMaterials(cachedMaterials);
+        await loadMyQuotes();
     } catch (err) {
         showNotification(err.message, 'error');
     }
 });
 
+// ANYAG ÁRÁNAK MÓDOSÍTÁSA (ADMIN - PATCH)
+window.updateMaterialPrice = async function(id) {
+    const input = document.getElementById(`mat-price-input-${id}`);
+    const ujAr = parseFloat(input.value);
+
+    try {
+        await apiFetch(`/api/materials/${id}/price`, {
+            method: 'PATCH',
+            body: JSON.stringify({ grammAr: ujAr })
+        });
+        showNotification(`A #${id} azonosítójú anyag új ára (${ujAr} Ft/g) elmentve!`, 'success');
+        cachedMaterials = await apiFetch('/api/materials');
+        renderMaterials(cachedMaterials);
+        await loadMyQuotes();
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+};
+
 window.deleteMaterial = async function(id) {
     try {
         await apiFetch(`/api/materials/${id}`, { method: 'DELETE' });
         showNotification(`A #${id} azonosítójú anyag törölve lett.`, 'success');
-        const materials = await apiFetch('/api/materials');
-        renderMaterials(materials);
+        cachedMaterials = await apiFetch('/api/materials');
+        renderMaterials(cachedMaterials);
+        await loadMyQuotes();
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+};
+
+// SAJÁT ÁRAJÁNLAT MÓDOSÍTÁSA (USER & ADMIN - PUT)
+window.updateMyQuote = async function(id) {
+    const materialId = parseInt(document.getElementById(`my-quote-mat-${id}`).value, 10);
+    const sulyGrammban = parseInt(document.getElementById(`my-quote-weight-${id}`).value, 10);
+
+    try {
+        const ujVegosszeg = await apiFetch(`/api/quotes/my/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ materialId, sulyGrammban })
+        });
+        showNotification(`A #${id} árajánlatod frissült! Új végösszeg: ${Number(ujVegosszeg).toLocaleString('hu-HU')} Ft`, 'success');
+        await loadMyQuotes();
+        if (isAdmin) {
+            await loadAdminData();
+        }
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+};
+
+// SAJÁT ÁRAJÁNLAT TÖRLÉSE (USER & ADMIN - DELETE)
+window.deleteMyQuote = async function(id) {
+    try {
+        await apiFetch(`/api/quotes/my/${id}`, { method: 'DELETE' });
+        showNotification(`A #${id} árajánlatod törölve lett.`, 'success');
+        await loadMyQuotes();
+        if (isAdmin) {
+            await loadAdminData();
+        }
     } catch (err) {
         showNotification(err.message, 'error');
     }
@@ -296,6 +415,7 @@ window.deleteQuote = async function(id) {
         await apiFetch(`/api/quotes/${id}`, { method: 'DELETE' });
         showNotification(`A #${id} azonosítójú árajánlat törölve lett.`, 'success');
         await loadAdminData();
+        await loadMyQuotes();
     } catch (err) {
         showNotification(err.message, 'error');
     }
@@ -303,12 +423,17 @@ window.deleteQuote = async function(id) {
 
 document.getElementById('refresh-materials-btn').addEventListener('click', async () => {
     try {
-        const materials = await apiFetch('/api/materials');
-        renderMaterials(materials);
+        cachedMaterials = await apiFetch('/api/materials');
+        renderMaterials(cachedMaterials);
         showNotification('Anyaglista frissítve.', 'success');
     } catch (err) {
         showNotification(err.message, 'error');
     }
+});
+
+document.getElementById('refresh-my-quotes-btn').addEventListener('click', async () => {
+    await loadMyQuotes();
+    showNotification('Saját árajánlatok frissítve.', 'success');
 });
 
 document.getElementById('refresh-admin-btn').addEventListener('click', async () => {
@@ -334,6 +459,7 @@ document.getElementById('quote-form').addEventListener('submit', async (e) => {
         resultBox.classList.remove('hidden');
         showNotification('Árajánlat sikeresen kiszámítva és elmentve!', 'success');
 
+        await loadMyQuotes();
         if (isAdmin) {
             await loadAdminData();
         }

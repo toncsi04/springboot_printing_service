@@ -44,4 +44,32 @@ public class ArajanlatController {
     public void deleteQuote(@PathVariable Long id) {
         arajanlatRepository.deleteById(id);
     }
+
+    // Saját árajánlatok lekérése (bejelentkezett USER / ADMIN)
+    @GetMapping("/my")
+    public List<ArajanlatEntity> getMyQuotes(Authentication authentication) {
+        return arajanlatService.getSajatArajanlatok(authentication.getName());
+    }
+
+    // Saját árajánlat módosítása (újraszámolja az árat is!)
+    @PutMapping("/my/{id}")
+    public int updateMyQuote(
+            @PathVariable Long id,
+            @Valid @RequestBody ArajanlatKeresDto request,
+            Authentication authentication) {
+        return arajanlatService.updateSajatArajanlat(
+                id,
+                authentication.getName(),
+                request.getMaterialId(),
+                request.getSulyGrammban()
+        );
+    }
+
+    // Saját árajánlat törlése
+    @DeleteMapping("/my/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMyQuote(@PathVariable Long id, Authentication authentication) {
+        arajanlatService.deleteSajatArajanlat(id, authentication.getName());
+    }
 }
+

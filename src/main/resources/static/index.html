@@ -105,6 +105,35 @@
     </div>
   </section>
 
+  <!-- ÚJ SZEKCIÓ: Saját árajánlatok és rendelések kezelése (USER & ADMIN) -->
+  <section id="my-quotes-section" class="card full-width hidden">
+    <div class="card-header">
+      <h2>Saját árajánlataim (Módosítás / Törlés)</h2>
+      <div class="btn-row">
+        <button type="button" id="refresh-my-quotes-btn" class="btn btn-outline btn-sm">Saját lista frissítése</button>
+        <span class="tag">BOLA védett</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nyomtatóanyag</th>
+          <th>Súly (g)</th>
+          <th>Kalkulált végösszeg</th>
+          <th>Műveletek</th>
+        </tr>
+        </thead>
+        <tbody id="my-quotes-tbody">
+        <tr>
+          <td colspan="5" class="empty-row">Még nincs saját árajánlatod.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- 3. SZEKCIÓ: Nyomtatóanyagok kezelése (CRUD) -->
   <section class="card materials-section full-width">
     <div class="card-header">
@@ -134,7 +163,7 @@
           <tr>
             <th>ID</th>
             <th>Anyag megnevezése</th>
-            <th>Egységár</th>
+            <th>Egységár (Ft/g)</th>
             <th>Művelet</th>
           </tr>
           </thead>
@@ -179,7 +208,7 @@
   <!-- 5. SZEKCIÓ (ADMIN): Beérkezett árajánlatok / rendelések -->
   <section id="admin-quotes-section" class="card full-width hidden">
     <div class="card-header">
-      <h2>5. Beérkezett árajánlatok és megrendelések (ADMIN)</h2>
+      <h2>5. Összes beérkezett árajánlat (ADMIN)</h2>
       <span class="tag tag-accent">RBAC védett</span>
     </div>
     <div class="table-wrapper">

@@ -7,4 +7,5 @@ public interface MaterialService {
     MaterialSaveDto save(MaterialSaveDto dto);
     List<MaterialSaveDto> findAll();
     void delete(Long id);
+    MaterialSaveDto updatePrice(Long id, Double ujGrammAr);
 }

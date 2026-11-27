@@ -1,6 +1,7 @@
 package hu.unideb.inf.printingservice.controller;
 
 import hu.unideb.inf.printingservice.service.MaterialService;
+import hu.unideb.inf.printingservice.service.dto.MaterialPriceUpdateDto;
 import hu.unideb.inf.printingservice.service.dto.MaterialSaveDto;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -30,5 +31,12 @@ public class MaterialController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteMaterial(@PathVariable Long id) {
         materialService.delete(id);
+    }
+
+    @PatchMapping("/{id}/price")
+    public MaterialSaveDto updateMaterialPrice(
+            @PathVariable Long id,
+            @Valid @RequestBody MaterialPriceUpdateDto dto) {
+        return materialService.updatePrice(id, dto.getGrammAr());
     }
 }

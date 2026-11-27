@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @Configuration
 @EnableWebSecurity
@@ -25,11 +26,15 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // REST API-hoz és teszteléshez kikapcsoljuk
                 .authorizeHttpRequests(auth -> auth
-                        // Átlag felhasználóknak csak ennyit engedek meg
+                        // Mindenkinek
                         .requestMatchers("/", "/index.html", "/css/**", "/js/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/materials").permitAll()
+
+                        //Bejelentkezett felhasznaloknak arkalkulacios jogai
                         .requestMatchers("/api/quotes/calculate").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/quotes/my").authenticated()
+                        .requestMatchers("/api/quotes/my/**").authenticated()
 
                         // Adminnak mindent hogy ne kelljen átírosgatni új funkciónál mindig
                         .anyRequest().hasRole("ADMIN")
