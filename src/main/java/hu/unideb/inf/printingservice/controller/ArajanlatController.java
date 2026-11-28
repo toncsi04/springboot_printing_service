@@ -45,6 +45,8 @@ public class ArajanlatController {
         arajanlatRepository.deleteById(id);
     }
 
+
+
     // Saját árajánlatok lekérése (bejelentkezett USER / ADMIN)
     @GetMapping("/my")
     public List<ArajanlatEntity> getMyQuotes(Authentication authentication) {

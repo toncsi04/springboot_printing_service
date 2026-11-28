@@ -74,4 +74,42 @@ class ArajanlatServiceImplTest {
         // Mivel hibára futott, az adatbázisba mentésnek (save) SOHA nem szabad lefutnia!
         verify(arajanlatRepository, never()).save(any());
     }
+
+    @Test
+    void updateSajatArajanlat_sikeresModositasEsUjraszamolas() {
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+        user.setFelhasznalonev("tesztuser");
+
+        MaterialEntity ujMaterial = new MaterialEntity();
+        ujMaterial.setId(2L);
+        ujMaterial.setGrammAr(20.0);
+
+        ArajanlatEntity meglevoQuote = new ArajanlatEntity();
+        meglevoQuote.setId(10L);
+        meglevoQuote.setUser(user);
+
+        when(arajanlatRepository.findByIdAndUser_Felhasznalonev(10L, "tesztuser"))
+                .thenReturn(Optional.of(meglevoQuote));
+        when(materialRepository.findById(2L)).thenReturn(Optional.of(ujMaterial));
+
+        // Képlet: ((50 * 20.0) + 1500) * 1.5 = 2500 * 1.5 = 3750
+        int ujAr = arajanlatService.updateSajatArajanlat(10L, "tesztuser", 2L, 50L);
+
+        assertEquals(3750, ujAr);
+        verify(arajanlatRepository, times(1)).save(meglevoQuote);
+    }
+
+    @Test
+    void updateSajatArajanlat_masFelhasznaloAjanlataraHibatDob() {
+        // A "tamado" nem találja meg a 10L azonosítójú ajánlatot, mert nem az övé
+        when(arajanlatRepository.findByIdAndUser_Felhasznalonev(10L, "tamado"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> {
+            arajanlatService.updateSajatArajanlat(10L, "tamado", 2L, 50L);
+        });
+
+        verify(arajanlatRepository, never()).save(any());
+    }
 }

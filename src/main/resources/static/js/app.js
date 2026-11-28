@@ -235,13 +235,16 @@ function renderMyQuotes(quotes) {
     }
 
     tbody.innerHTML = quotes.map(q => {
-        const currentMatId = q.material?.id || q.materialId;
+        const currentMatId = q.material?.id ?? q.materialId ?? q.material_id;
+        const currentMatNev = q.material?.nev ?? q.materialNev ?? q.anyagNev;
         const osszeg = q.vegosszeg ?? q.ar ?? 0;
 
-        // Lenyíló lista az elérhető anyagokból, az aktuális kiválasztva
-        const materialOptions = cachedMaterials.map(m =>
-            `<option value="${m.id}" ${m.id === currentMatId ? 'selected' : ''}>${m.nev} (${m.grammAr} Ft/g)</option>`
-        ).join('');
+        // Lenyíló lista: ID (számmá alakítva) VAGY név egyezés alapján jelöli ki az aktuális anyagot
+        const materialOptions = cachedMaterials.map(m => {
+            const isSelected = (currentMatId !== undefined && currentMatId !== null && Number(m.id) === Number(currentMatId))
+                || (currentMatNev && m.nev === currentMatNev);
+            return `<option value="${m.id}" ${isSelected ? 'selected' : ''}>${m.nev} (${m.grammAr} Ft/g)</option>`;
+        }).join('');
 
         return `
             <tr>
@@ -252,7 +255,7 @@ function renderMyQuotes(quotes) {
                     </select>
                 </td>
                 <td>
-                    <input type="number" id="my-quote-weight-${q.id}" value="${q.suly}" min="1" max="10000" style="width: 90px; padding: 4px;"> g
+                    <input type="number" id="my-quote-weight-${q.id}" value="${q.suly ?? q.sulyGrammban}" min="1" max="10000" style="width: 90px; padding: 4px;"> g
                 </td>
                 <td><strong>${Number(osszeg).toLocaleString('hu-HU')} Ft</strong></td>
                 <td>
